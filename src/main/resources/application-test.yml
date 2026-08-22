@@ -1,0 +1,47 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: bloomly
+
+  flyway:
+    locations: classpath:/db/migration
+    baseline-on-migrate: true
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bloomlydb
+    username: bloomly
+    password: bloomly
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      username: redis
+      password: redis
+
+  jpa:
+    defer-datasource-initialization: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+    show_sql: true
+
+telegram:
+  bot:
+    name: MyBloomlyBot
+    token: "8673254274:AAEehoX2E1sNtMHvKTlcV1ZtNGOBBcAmPK8"
+
+jwt:
+  secret: ${JWT_SECRET:change-me-change-me-change-me-change-me-32b}
+  expiration-ms: 86400000
+
+auth:
+  otp:
+    ttl-seconds: 300
+    length: 6
+    resend-interval-seconds: 60
+    max-attempts: 5
