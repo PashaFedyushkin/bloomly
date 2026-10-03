@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/services")
 @AllArgsConstructor
-public class ServiceController {
+public class ServiceController extends BaseController{
 
     private final ServiceService serviceService;
 
@@ -23,6 +23,11 @@ public class ServiceController {
         return serviceService.getAll();
     }
 
+    @GetMapping("/my")
+    public List<ServiceDto> getMyServices() {
+        return serviceService.getByMasterId(getCurrentUserId());
+    }
+
     @GetMapping("/{id}")
     public ServiceDto getById(@PathVariable Long id) {
         return serviceService.getById(id);
@@ -31,6 +36,7 @@ public class ServiceController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ServiceDto create(@RequestBody ServiceDto serviceDto) {
+        serviceDto.setMasterId(getCurrentUserId());
         return serviceService.create(serviceDto);
     }
 

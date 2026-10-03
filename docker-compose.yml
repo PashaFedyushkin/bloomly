@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bloomlydb
+      POSTGRES_USER: bloomly
+      POSTGRES_PASSWORD: bloomly
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bloomly -d bloomlydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "redis"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: bloomly
+      MINIO_ROOT_PASSWORD: bloomlysecret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+      - "8787:8787"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bloomlydb
+      SPRING_DATASOURCE_USERNAME: bloomly
+      SPRING_DATASOURCE_PASSWORD: bloomly
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_USERNAME: default
+      SPRING_DATA_REDIS_PASSWORD: redis
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me-32b}
+      MINIO_URL: http://minio:9000
+      MINIO_PUBLIC_URL: http://localhost:9000
+      MINIO_ACCESS_KEY: bloomly
+      MINIO_SECRET_KEY: bloomlysecret
+      MINIO_BUCKET: bloomly-reviews
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

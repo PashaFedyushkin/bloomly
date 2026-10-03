@@ -30,6 +30,11 @@ spring:
         format_sql: true
     show_sql: true
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 40MB
+
 telegram:
   bot:
     name: MyBloomlyBot
@@ -45,3 +50,10 @@ auth:
     length: 6
     resend-interval-seconds: 60
     max-attempts: 5
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  public-url: ${MINIO_PUBLIC_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:bloomly}
+  secret-key: ${MINIO_SECRET_KEY:bloomlysecret}
+  bucket: ${MINIO_BUCKET:bloomly-reviews}

@@ -16,9 +16,11 @@ public class User {
     @SequenceGenerator(name = "user_id_generator", sequenceName = "user_id_seq", allocationSize = 1)
     private Long id;
     private String name;
+    private String lastName;
     private LocalDateTime creationDate;
     private String phone;
-    private Long telegramChatId;
+    @Column(length = 500)
+    private String photoKey;
     @ManyToMany
     @JoinTable(
             name = "user_role",
@@ -28,6 +30,8 @@ public class User {
     private List<Role> roles;
     @OneToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}, mappedBy = "user")
     private Master master;
+    @OneToMany(mappedBy = "user")
+    private List<Session> sessions;
 
     public User () {}
 

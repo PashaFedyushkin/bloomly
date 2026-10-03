@@ -19,6 +19,9 @@ import java.util.List;
 @Component
 public class TelegramNotificationBot extends TelegramLongPollingBot {
 
+    public static final String BOT_HINT =
+            "Не удалось отправить код. Откройте Telegram-бота Bloomly, нажмите /start и поделитесь номером телефона.";
+
     @Value("${telegram.bot.name}")
     private String botUsername;
 

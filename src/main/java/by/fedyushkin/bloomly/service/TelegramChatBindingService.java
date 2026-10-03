@@ -1,6 +1,8 @@
 package by.fedyushkin.bloomly.service;
 
+import by.fedyushkin.bloomly.entity.Telegram;
 import by.fedyushkin.bloomly.entity.User;
+import by.fedyushkin.bloomly.repository.TelegramRepository;
 import by.fedyushkin.bloomly.repository.UserRepository;
 import by.fedyushkin.bloomly.util.PhoneNumbers;
 import lombok.AllArgsConstructor;
@@ -15,11 +17,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class TelegramChatBindingService {
 
-    private static final String CHAT_KEY_PREFIX = "telegram:chat:";
-    private static final String NAME_KEY_PREFIX = "telegram:name:";
-
-    private final StringRedisTemplate redis;
-    private final UserRepository userRepository;
+    private final TelegramRepository telegramRepository;
 
     @Transactional
     public void bind(String phone, Long chatId, String displayName) {
@@ -28,22 +26,20 @@ public class TelegramChatBindingService {
             return;
         }
 
-        redis.opsForValue().set(CHAT_KEY_PREFIX + normalized, String.valueOf(chatId));
-        if (displayName != null && !displayName.isBlank()) {
-            redis.opsForValue().set(NAME_KEY_PREFIX + normalized, displayName.trim());
-        }
-
-        userRepository.findByPhone(normalized).ifPresentOrElse(
-                user -> {
-                    user.setTelegramChatId(chatId);
-                    userRepository.save(user);
+        telegramRepository.findByPhone(normalized).ifPresentOrElse(
+                telegram -> {
+                    telegram.setChatId(chatId);
+                    telegram.setDisplayName(displayName);
+                    telegramRepository.save(telegram);
                 },
                 () -> {
-                    User user = new User();
-                    user.setPhone(normalized);
-                    user.setTelegramChatId(chatId);
-                    userRepository.save(user);
+                    Telegram telegram = new Telegram();
+                    telegram.setPhone(normalized);
+                    telegram.setChatId(chatId);
+                    telegramRepository.save(telegram);
                 });
+
+
     }
 
     public Optional<Long> findChatId(String phone) {
@@ -52,18 +48,8 @@ public class TelegramChatBindingService {
             return Optional.empty();
         }
 
-        String cached = redis.opsForValue().get(CHAT_KEY_PREFIX + normalized);
-        if (cached != null) {
-            return Optional.of(Long.parseLong(cached));
-        }
-
-        return userRepository.findByPhone(normalized)
-                .map(User::getTelegramChatId)
-                .filter(Objects::nonNull)
-                .map(chatId -> {
-                    redis.opsForValue().set(CHAT_KEY_PREFIX + normalized, String.valueOf(chatId));
-                    return chatId;
-                });
+        return telegramRepository.findByPhone(normalized)
+                .map(Telegram::getChatId);
     }
 
     public Optional<String> findDisplayName(String phone) {
@@ -71,7 +57,8 @@ public class TelegramChatBindingService {
         if (normalized == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(redis.opsForValue().get(NAME_KEY_PREFIX + normalized))
-                .filter(name -> !name.isBlank());
+
+        return telegramRepository.findByPhone(normalized)
+                .map(Telegram::getDisplayName);
     }
 }

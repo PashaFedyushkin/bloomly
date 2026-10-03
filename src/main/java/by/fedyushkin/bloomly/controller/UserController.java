@@ -4,14 +4,16 @@ import by.fedyushkin.bloomly.dto.UserDto;
 import by.fedyushkin.bloomly.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 @AllArgsConstructor
-public class UserController {
+public class UserController extends BaseController{
 
     private final UserService userService;
 
@@ -25,9 +27,14 @@ public class UserController {
         return userService.getById(id);
     }
 
-    @GetMapping("/{id}/roles")
-    public List<String> getUserRoles(@PathVariable Long id) {
-        return userService.getUserRoles(id);
+    @GetMapping("/current")
+    public UserDto getCurrent() {
+        return userService.getById(getCurrentUserId());
+    }
+
+    @GetMapping("/roles")
+    public List<String> getUserRoles() {
+        return userService.getUserRoles(getCurrentUserId());
     }
 
     @PostMapping
@@ -36,14 +43,26 @@ public class UserController {
         return userService.create(userDto);
     }
 
-    @PutMapping("/{id}")
-    public UserDto update(@PathVariable Long id, @RequestBody UserDto userDto) {
-        return userService.update(id, userDto);
+    @PutMapping
+    public UserDto update(@RequestBody UserDto userDto) {
+        userDto.setId(getCurrentUserId());
+        return userService.update(getCurrentUserId(), userDto);
     }
 
-    @DeleteMapping("/{id}")
+    @PutMapping(value = "/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public UserDto updatePhoto(@RequestParam("photo") MultipartFile photo) {
+        return userService.updatePhoto(getCurrentUserId(), photo);
+    }
+
+    @DeleteMapping("/photo")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        userService.delete(id);
+    public void deletePhoto() {
+        userService.deletePhoto(getCurrentUserId());
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete() {
+        userService.delete(getCurrentUserId());
     }
 }
