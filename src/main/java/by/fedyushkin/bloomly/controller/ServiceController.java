@@ -3,10 +3,11 @@ package by.fedyushkin.bloomly.controller;
 import by.fedyushkin.bloomly.dto.ServiceDto;
 import by.fedyushkin.bloomly.service.ServiceService;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/services")
@@ -16,16 +17,20 @@ public class ServiceController extends BaseController{
     private final ServiceService serviceService;
 
     @GetMapping
-    public List<ServiceDto> getAll(@RequestParam(required = false) Long masterId) {
-        if (masterId != null) {
-            return serviceService.getByMasterId(masterId);
-        }
-        return serviceService.getAll();
+    public Page<ServiceDto> getAll(
+            @RequestParam(required = false) Long masterId,
+            @RequestParam(required = false) String categoryName,
+            @ParameterObject Pageable pageable
+    ) {
+        return serviceService.getAll(masterId, categoryName, pageable);
     }
 
     @GetMapping("/my")
-    public List<ServiceDto> getMyServices() {
-        return serviceService.getByMasterId(getCurrentUserId());
+    public Page<ServiceDto> getMyServices(
+            @RequestParam(required = false) String categoryName,
+            @ParameterObject Pageable pageable
+    ) {
+        return serviceService.getAll(getCurrentUserId(), categoryName, pageable);
     }
 
     @GetMapping("/{id}")

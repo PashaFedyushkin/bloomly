@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @org.springframework.stereotype.Service
@@ -79,6 +80,15 @@ public class SessionServiceImpl implements SessionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "dateFrom must be before or equal to dateTo");
         }
         return repository.findByMasterIdAndDateBetween(masterId, dateFrom, dateTo).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Override
+    public List<SessionDto> getMyNearestSessions(Long userId) {
+        return repository.findByUserId(userId).stream()
+                .sorted(Comparator.comparing(Session::getDate))
+                .limit(3)
                 .map(this::toDto)
                 .toList();
     }

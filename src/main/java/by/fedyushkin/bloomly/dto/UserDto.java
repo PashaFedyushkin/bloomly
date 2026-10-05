@@ -1,5 +1,6 @@
 package by.fedyushkin.bloomly.dto;
 
+import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,4 +16,7 @@ public class UserDto {
     private String phone;
     private List<String> roles;
     private String photoUrl;
+    private String vk;
+    private String instagram;
+    private String telegram;
 }

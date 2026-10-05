@@ -2,14 +2,14 @@ package by.fedyushkin.bloomly.service;
 
 import by.fedyushkin.bloomly.dto.MasterDto;
 import by.fedyushkin.bloomly.dto.MasterFullDto;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface MasterService {
 
-    List<MasterDto> getAll();
+    Page<MasterDto> getAll(Pageable pageable);
 
-    List<MasterFullDto> getMasters();
+    Page<MasterFullDto> getMasters(Pageable pageable);
 
     MasterFullDto getById(Long masterId);
 

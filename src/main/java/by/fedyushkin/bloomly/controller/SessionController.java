@@ -87,4 +87,9 @@ public class SessionController extends BaseController{
     public void delete(@PathVariable Long id) {
         sessionService.delete(id);
     }
+
+    @GetMapping("/my/nearest")
+    public List<SessionDto> getById() {
+        return sessionService.getMyNearestSessions(getCurrentUserId());
+    }
 }

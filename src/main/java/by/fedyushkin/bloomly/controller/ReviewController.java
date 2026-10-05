@@ -3,6 +3,9 @@ package by.fedyushkin.bloomly.controller;
 import by.fedyushkin.bloomly.dto.ReviewDto;
 import by.fedyushkin.bloomly.service.ReviewService;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -32,13 +35,13 @@ public class ReviewController extends BaseController{
     }
 
     @GetMapping("/master/my")
-    public List<ReviewDto> getMasterReviews() {
-        return reviewService.getByMasterId(getCurrentUserId());
+    public Page<ReviewDto> getMasterReviews(@ParameterObject Pageable pageable) {
+        return reviewService.getByMasterId(getCurrentUserId(), pageable);
     }
 
     @GetMapping("/user/my")
-    public List<ReviewDto> getUserReviews() {
-        return reviewService.getByUserId(getCurrentUserId());
+    public Page<ReviewDto> getUserReviews(@ParameterObject Pageable pageable) {
+        return reviewService.getByUserId(getCurrentUserId(), pageable);
     }
 
     @GetMapping("/{id}")

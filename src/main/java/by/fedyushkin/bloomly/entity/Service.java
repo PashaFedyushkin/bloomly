@@ -15,9 +15,13 @@ public class Service {
     private String name;
     private String description;
     private Float price;
+    private Integer durationMinutes;
     @ManyToOne
     @JoinColumn(name = "master_id", referencedColumnName = "id")
     private Master master;
+    @ManyToOne
+    @JoinColumn(name = "category_id", referencedColumnName = "id")
+    private Category category;
     @OneToMany(mappedBy = "service")
     private List<Session> sessions;
 }

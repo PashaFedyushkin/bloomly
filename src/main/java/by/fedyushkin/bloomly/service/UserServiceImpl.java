@@ -82,6 +82,9 @@ public class UserServiceImpl implements UserService {
         User user = getUserOrThrow(userId);
         user.setName(userDto.getName());
         user.setPhone(PhoneNumbers.normalize(userDto.getPhone()));
+        user.setInstagram(userDto.getInstagram());
+        user.setVk(userDto.getVk());
+        user.setTelegram(userDto.getTelegram());
         return toDto(repository.save(user));
     }
 
@@ -153,6 +156,9 @@ public class UserServiceImpl implements UserService {
         dto.setLastName(user.getLastName());
         dto.setCreationDate(user.getCreationDate());
         dto.setPhone(user.getPhone());
+        dto.setVk(user.getVk());
+        dto.setInstagram(user.getInstagram());
+        dto.setTelegram(user.getTelegram());
         if (user.getPhotoKey() != null) {
             dto.setPhotoUrl(minioStorageService.presignedUrl(user.getPhotoKey()));
         }

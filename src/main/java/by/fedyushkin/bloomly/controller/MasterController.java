@@ -4,10 +4,11 @@ import by.fedyushkin.bloomly.dto.MasterDto;
 import by.fedyushkin.bloomly.dto.MasterFullDto;
 import by.fedyushkin.bloomly.service.MasterService;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/masters")
@@ -17,13 +18,13 @@ public class MasterController extends BaseController {
     private final MasterService masterService;
 
     @GetMapping
-    public List<MasterDto> getAll() {
-        return masterService.getAll();
+    public Page<MasterDto> getAll(@ParameterObject Pageable pageable) {
+        return masterService.getAll(pageable);
     }
 
     @GetMapping("/all")
-    public List<MasterFullDto> getMasters() {
-        return masterService.getMasters();
+    public Page<MasterFullDto> getMasters(@ParameterObject Pageable pageable) {
+        return masterService.getMasters(pageable);
     }
 
     @GetMapping("/{id}")

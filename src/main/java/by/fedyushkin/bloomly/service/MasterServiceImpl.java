@@ -4,16 +4,16 @@ import by.fedyushkin.bloomly.dto.AddressDto;
 import by.fedyushkin.bloomly.dto.MasterDto;
 import by.fedyushkin.bloomly.dto.MasterFullDto;
 import by.fedyushkin.bloomly.dto.UserDto;
-import by.fedyushkin.bloomly.entity.Address;
-import by.fedyushkin.bloomly.entity.Master;
-import by.fedyushkin.bloomly.entity.Role;
-import by.fedyushkin.bloomly.entity.Session;
-import by.fedyushkin.bloomly.entity.User;
+import by.fedyushkin.bloomly.entity.*;
 import by.fedyushkin.bloomly.repository.AddressRepository;
 import by.fedyushkin.bloomly.repository.MasterRepository;
 import by.fedyushkin.bloomly.repository.RoleRepository;
 import by.fedyushkin.bloomly.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,18 +38,14 @@ public class MasterServiceImpl implements MasterService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MasterDto> getAll() {
-        return repository.findAll().stream()
-                .map(this::toDto)
-                .toList();
+    public Page<MasterDto> getAll(Pageable pageable) {
+        return repository.findAll(stablePage(pageable)).map(this::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<MasterFullDto> getMasters() {
-        return repository.findAll().stream()
-                .map(this::toFullDto)
-                .toList();
+    public Page<MasterFullDto> getMasters(Pageable pageable) {
+        return repository.findAll(stablePage(pageable)).map(this::toFullDto);
     }
 
     @Override
@@ -99,6 +95,13 @@ public class MasterServiceImpl implements MasterService {
         }
         portfolioService.deleteByMasterId(masterId);
         repository.deleteById(masterId);
+    }
+
+    private Pageable stablePage(Pageable pageable) {
+        if (pageable.getSort().isSorted()) {
+            return pageable;
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
     }
 
     private User resolveUser(Long userId) {
@@ -162,7 +165,7 @@ public class MasterServiceImpl implements MasterService {
             dto.setAddress(toAddressDto(master.getAddress()));
         }
         dto.setReviewCount(master.getSessions() == null ? 0 : master.getSessions().stream().map(Session::getReview).filter(Objects::nonNull).count());
-        dto.setRating(dto.getReviewCount() > 0 ? 0 : 4.6F);
+        dto.setRating(dto.getReviewCount() > 0 ? 4.6f : null);
         return dto;
     }
 

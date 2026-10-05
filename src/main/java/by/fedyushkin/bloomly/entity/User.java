@@ -21,6 +21,12 @@ public class User {
     private String phone;
     @Column(length = 500)
     private String photoKey;
+    @Column(length = 200)
+    private String vk;
+    @Column(length = 200)
+    private String instagram;
+    @Column(length = 200)
+    private String telegram;
     @ManyToMany
     @JoinTable(
             name = "user_role",

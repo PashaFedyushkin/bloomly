@@ -1,14 +1,12 @@
 package by.fedyushkin.bloomly.service;
 
 import by.fedyushkin.bloomly.dto.ServiceDto;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ServiceService {
 
-    List<ServiceDto> getAll();
-
-    List<ServiceDto> getByMasterId(Long masterId);
+    Page<ServiceDto> getAll(Long masterId, String categoryName, Pageable pageable);
 
     ServiceDto getById(Long serviceId);
 

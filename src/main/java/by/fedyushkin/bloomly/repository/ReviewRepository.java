@@ -1,6 +1,8 @@
 package by.fedyushkin.bloomly.repository;
 
 import by.fedyushkin.bloomly.entity.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,5 +16,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findBySessionMasterId(Long masterId);
 
+    Page<Review> findBySessionMasterId(Long masterId, Pageable pageable);
+
     List<Review> findBySessionUserId(Long userId);
+
+    Page<Review> findBySessionUserId(Long userId, Pageable pageable);
 }

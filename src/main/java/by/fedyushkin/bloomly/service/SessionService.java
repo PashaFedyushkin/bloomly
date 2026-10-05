@@ -19,6 +19,8 @@ public interface SessionService {
 
     List<SessionDto> getByMasterIdAndDateBetween(Long masterId, LocalDateTime dateFrom, LocalDateTime dateTo);
 
+    List<SessionDto> getMyNearestSessions(Long userId);
+
     SessionDto getById(Long sessionId);
 
     SessionDto create(SessionDto sessionDto);

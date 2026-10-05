@@ -6,6 +6,10 @@ import by.fedyushkin.bloomly.entity.Session;
 import by.fedyushkin.bloomly.repository.ReviewRepository;
 import by.fedyushkin.bloomly.repository.SessionRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,10 +67,22 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<ReviewDto> getByMasterId(Long masterId, Pageable pageable) {
+        return repository.findBySessionMasterId(masterId, stablePage(pageable)).map(this::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ReviewDto> getByUserId(Long userId) {
         return repository.findBySessionUserId(userId).stream()
                 .map(this::toDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewDto> getByUserId(Long userId, Pageable pageable) {
+        return repository.findBySessionUserId(userId, stablePage(pageable)).map(this::toDto);
     }
 
     @Override
@@ -129,6 +145,13 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public void deleteBySessionId(Long sessionId) {
         repository.findBySessionId(sessionId).ifPresent(this::deleteReview);
+    }
+
+    private Pageable stablePage(Pageable pageable) {
+        if (pageable.getSort().isSorted()) {
+            return pageable;
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
     }
 
     private void deleteReview(Review review) {
