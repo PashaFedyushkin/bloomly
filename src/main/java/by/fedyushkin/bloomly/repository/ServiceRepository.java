@@ -15,19 +15,22 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
                     left join s.master m
                     left join s.category c
                     where (:masterId is null or m.id = :masterId)
-                      and (:categoryName is null or lower(c.name) = lower(:categoryName))
+                      and (:categoryName is null or c.name = :categoryName)
+                      and (:name is null or s.name like :name)
                     """,
             countQuery = """
                     select count(s) from Service s
                     left join s.master m
                     left join s.category c
                     where (:masterId is null or m.id = :masterId)
-                      and (:categoryName is null or lower(c.name) = lower(:categoryName))
+                      and (:categoryName is null or c.name = :categoryName)
+                      and (:name is null or s.name like :name)
                     """
     )
     Page<Service> findFiltered(
             @Param("masterId") Long masterId,
             @Param("categoryName") String categoryName,
+            @Param("name") String name,
             Pageable pageable
     );
 }

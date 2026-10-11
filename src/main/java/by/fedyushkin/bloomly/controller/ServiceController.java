@@ -20,9 +20,10 @@ public class ServiceController extends BaseController{
     public Page<ServiceDto> getAll(
             @RequestParam(required = false) Long masterId,
             @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) String name,
             @ParameterObject Pageable pageable
     ) {
-        return serviceService.getAll(masterId, categoryName, pageable);
+        return serviceService.getAll(masterId, categoryName, name, pageable);
     }
 
     @GetMapping("/my")
@@ -30,7 +31,7 @@ public class ServiceController extends BaseController{
             @RequestParam(required = false) String categoryName,
             @ParameterObject Pageable pageable
     ) {
-        return serviceService.getAll(getCurrentUserId(), categoryName, pageable);
+        return serviceService.getAll(getCurrentUserId(), categoryName, null, pageable);
     }
 
     @GetMapping("/{id}")

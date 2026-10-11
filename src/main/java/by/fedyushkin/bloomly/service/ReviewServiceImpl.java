@@ -1,5 +1,6 @@
 package by.fedyushkin.bloomly.service;
 
+import by.fedyushkin.bloomly.dto.MasterReviewsDto;
 import by.fedyushkin.bloomly.dto.ReviewDto;
 import by.fedyushkin.bloomly.entity.Review;
 import by.fedyushkin.bloomly.entity.Session;
@@ -18,7 +19,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -67,8 +70,11 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ReviewDto> getByMasterId(Long masterId, Pageable pageable) {
-        return repository.findBySessionMasterId(masterId, stablePage(pageable)).map(this::toDto);
+    public MasterReviewsDto getByMasterId(Long masterId, Pageable pageable) {
+        MasterReviewsDto dto = new MasterReviewsDto();
+        dto.setReviews(repository.findBySessionMasterId(masterId, stablePage(pageable)).map(this::toDto));
+        dto.setStarCounts(getStarCounts(masterId));
+        return dto;
     }
 
     @Override
@@ -145,6 +151,21 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public void deleteBySessionId(Long sessionId) {
         repository.findBySessionId(sessionId).ifPresent(this::deleteReview);
+    }
+
+    private Map<Integer, Long> getStarCounts(Long masterId) {
+        Map<Integer, Long> counts = new LinkedHashMap<>();
+        for (int stars = MIN_STARS; stars <= MAX_STARS; stars++) {
+            counts.put(stars, 0L);
+        }
+        for (Object[] row : repository.countByStarsForMaster(masterId)) {
+            int stars = ((Number) row[0]).intValue();
+            long count = ((Number) row[1]).longValue();
+            if (stars >= MIN_STARS && stars <= MAX_STARS) {
+                counts.put(stars, count);
+            }
+        }
+        return counts;
     }
 
     private Pageable stablePage(Pageable pageable) {

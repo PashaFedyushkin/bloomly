@@ -1,5 +1,6 @@
 package by.fedyushkin.bloomly.controller;
 
+import by.fedyushkin.bloomly.dto.MasterReviewsDto;
 import by.fedyushkin.bloomly.dto.ReviewDto;
 import by.fedyushkin.bloomly.service.ReviewService;
 import lombok.AllArgsConstructor;
@@ -35,7 +36,7 @@ public class ReviewController extends BaseController{
     }
 
     @GetMapping("/master/my")
-    public Page<ReviewDto> getMasterReviews(@ParameterObject Pageable pageable) {
+    public MasterReviewsDto getMasterReviews(@ParameterObject Pageable pageable) {
         return reviewService.getByMasterId(getCurrentUserId(), pageable);
     }
 

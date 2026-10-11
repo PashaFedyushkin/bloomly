@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface ServiceService {
 
-    Page<ServiceDto> getAll(Long masterId, String categoryName, Pageable pageable);
+    Page<ServiceDto> getAll(Long masterId, String categoryName, String name, Pageable pageable);
 
     ServiceDto getById(Long serviceId);
 

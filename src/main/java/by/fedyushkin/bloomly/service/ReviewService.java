@@ -1,5 +1,6 @@
 package by.fedyushkin.bloomly.service;
 
+import by.fedyushkin.bloomly.dto.MasterReviewsDto;
 import by.fedyushkin.bloomly.dto.ReviewDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,7 +18,7 @@ public interface ReviewService {
 
     List<ReviewDto> getByMasterId(Long masterId);
 
-    Page<ReviewDto> getByMasterId(Long masterId, Pageable pageable);
+    MasterReviewsDto getByMasterId(Long masterId, Pageable pageable);
 
     List<ReviewDto> getByUserId(Long userId);
 
