@@ -29,9 +29,10 @@ public class ServiceController extends BaseController{
     @GetMapping("/my")
     public Page<ServiceDto> getMyServices(
             @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) String name,
             @ParameterObject Pageable pageable
     ) {
-        return serviceService.getAll(getCurrentUserId(), categoryName, null, pageable);
+        return serviceService.getAll(getCurrentUserId(), categoryName, name, pageable);
     }
 
     @GetMapping("/{id}")

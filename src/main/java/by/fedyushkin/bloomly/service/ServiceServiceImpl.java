@@ -29,7 +29,12 @@ public class ServiceServiceImpl implements ServiceService {
     @Override
     @Transactional(readOnly = true)
     public Page<ServiceDto> getAll(Long masterId, String categoryName, String name, Pageable pageable) {
-        return repository.findFiltered(masterId, normalize(categoryName), "%" + normalize(name) + "%", stablePage(pageable))
+        return repository.findFiltered(
+                        masterId,
+                        normalize(categoryName),
+                        normalize(name) == null ? null : "%" + normalize(name) + "%",
+                        stablePage(pageable)
+                )
                 .map(this::toDto);
     }
 

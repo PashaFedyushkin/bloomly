@@ -10,4 +10,5 @@ public class MasterReviewsDto {
 
     private Page<ReviewDto> reviews;
     private Map<Integer, Long> starCounts;
+    private Float rating;
 }

@@ -22,6 +22,7 @@ public class Master {
     private String instagram;
     @Column(length = 200)
     private String telegram;
+    private Float rating;
     @OneToMany(mappedBy = "master")
     private List<Session> sessions;
     @OneToMany(mappedBy = "master")

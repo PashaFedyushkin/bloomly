@@ -165,7 +165,7 @@ public class MasterServiceImpl implements MasterService {
             dto.setAddress(toAddressDto(master.getAddress()));
         }
         dto.setReviewCount(master.getSessions() == null ? 0 : master.getSessions().stream().map(Session::getReview).filter(Objects::nonNull).count());
-        dto.setRating(dto.getReviewCount() > 0 ? 4.6f : null);
+        dto.setRating(master.getRating());
         return dto;
     }
 

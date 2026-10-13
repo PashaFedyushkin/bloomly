@@ -28,6 +28,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             """)
     List<Object[]> countByStarsForMaster(@Param("masterId") Long masterId);
 
+    @Query("""
+            select avg(r.stars)
+            from Review r
+            where r.session.master.id = :masterId
+            """)
+    Double averageStarsByMasterId(@Param("masterId") Long masterId);
+
     List<Review> findBySessionUserId(Long userId);
 
     Page<Review> findBySessionUserId(Long userId, Pageable pageable);

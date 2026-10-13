@@ -2,8 +2,10 @@ package by.fedyushkin.bloomly.service;
 
 import by.fedyushkin.bloomly.dto.MasterReviewsDto;
 import by.fedyushkin.bloomly.dto.ReviewDto;
+import by.fedyushkin.bloomly.entity.Master;
 import by.fedyushkin.bloomly.entity.Review;
 import by.fedyushkin.bloomly.entity.Session;
+import by.fedyushkin.bloomly.repository.MasterRepository;
 import by.fedyushkin.bloomly.repository.ReviewRepository;
 import by.fedyushkin.bloomly.repository.SessionRepository;
 import lombok.AllArgsConstructor;
@@ -36,6 +38,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository repository;
     private final SessionRepository sessionRepository;
+    private final MasterRepository masterRepository;
     private final MinioStorageService minioStorageService;
 
     @Override
@@ -74,6 +77,7 @@ public class ReviewServiceImpl implements ReviewService {
         MasterReviewsDto dto = new MasterReviewsDto();
         dto.setReviews(repository.findBySessionMasterId(masterId, stablePage(pageable)).map(this::toDto));
         dto.setStarCounts(getStarCounts(masterId));
+        dto.setRating(masterRepository.findById(masterId).map(Master::getRating).orElse(null));
         return dto;
     }
 
@@ -111,7 +115,9 @@ public class ReviewServiceImpl implements ReviewService {
             review.setStars(normalizedStars);
             review.setDate(LocalDateTime.now());
             review.setPhotoKeys(new ArrayList<>(uploadedKeys));
-            return toDto(repository.save(review));
+            Review saved = repository.save(review);
+            refreshMasterRating(session.getMaster());
+            return toDto(saved);
         } catch (RuntimeException e) {
             uploadedKeys.forEach(minioStorageService::delete);
             throw e;
@@ -126,14 +132,18 @@ public class ReviewServiceImpl implements ReviewService {
 
         List<MultipartFile> imageFiles = requirePhotos(photos, false);
         if (imageFiles.isEmpty()) {
-            return toDto(repository.save(review));
+            Review saved = repository.save(review);
+            refreshMasterRating(saved.getSession() == null ? null : saved.getSession().getMaster());
+            return toDto(saved);
         }
 
         List<String> oldKeys = new ArrayList<>(review.getPhotoKeys());
         List<String> uploadedKeys = uploadPhotos(review.getSession().getId(), imageFiles);
         try {
             review.setPhotoKeys(new ArrayList<>(uploadedKeys));
-            ReviewDto dto = toDto(repository.save(review));
+            Review saved = repository.save(review);
+            refreshMasterRating(saved.getSession() == null ? null : saved.getSession().getMaster());
+            ReviewDto dto = toDto(saved);
             oldKeys.forEach(minioStorageService::delete);
             return dto;
         } catch (RuntimeException e) {
@@ -176,9 +186,20 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private void deleteReview(Review review) {
+        Master master = review.getSession() == null ? null : review.getSession().getMaster();
         List<String> keys = new ArrayList<>(review.getPhotoKeys());
         repository.delete(review);
+        refreshMasterRating(master);
         keys.forEach(minioStorageService::delete);
+    }
+
+    private void refreshMasterRating(Master master) {
+        if (master == null || master.getId() == null) {
+            return;
+        }
+        Double average = repository.averageStarsByMasterId(master.getId());
+        master.setRating(average == null ? null : average.floatValue());
+        masterRepository.save(master);
     }
 
     private List<String> uploadPhotos(Long sessionId, List<MultipartFile> photos) {
