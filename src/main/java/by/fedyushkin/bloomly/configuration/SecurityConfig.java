@@ -58,6 +58,8 @@ public class SecurityConfig {
                                 "/register/code",
                                 "/register/check/phone",
                                 "/auth/login",
+                                "/auth/refresh",
+                                "/auth/logout",
                                 "/masters/all",
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
@@ -81,7 +83,7 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
-        config.setAllowCredentials(false);
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

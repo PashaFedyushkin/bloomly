@@ -46,7 +46,9 @@ telegram:
 
 jwt:
   secret: ${JWT_SECRET:change-me-change-me-change-me-change-me-32b}
-  expiration-ms: 86400000
+  access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:900}
+  refresh-ttl-seconds: ${JWT_REFRESH_TTL_SECONDS:2592000}
+  cookie-secure: ${JWT_COOKIE_SECURE:false}
 
 auth:
   otp:

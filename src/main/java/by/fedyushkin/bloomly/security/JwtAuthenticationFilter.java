@@ -33,7 +33,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return path.startsWith("/v3/api-docs")
                 || path.startsWith("/swagger-ui")
                 || path.equals("/swagger-ui.html")
-                || path.startsWith("/webjars/");
+                || path.startsWith("/webjars/")
+                || path.equals("/auth/refresh")
+                || path.equals("/auth/logout");
     }
 
     @Override
@@ -56,6 +58,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             Claims claims = jwtService.parseToken(token);
+            if (!jwtService.isAccessToken(claims)) {
+                throw new JwtException("Access token required");
+            }
             Long userId = Long.parseLong(claims.getSubject());
             String phone = claims.get("phone", String.class);
             List<SimpleGrantedAuthority> authorities = extractAuthorities(claims.get("roles"));

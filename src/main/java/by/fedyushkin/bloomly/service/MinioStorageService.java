@@ -8,6 +8,7 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,20 +31,17 @@ public class MinioStorageService {
     );
 
     private final MinioClient minioClient;
+    private final MinioClient presignClient;
     private final String bucket;
-    private final String publicUrl;
-    private final String endpoint;
 
     public MinioStorageService(
             MinioClient minioClient,
-            @Value("${minio.bucket}") String bucket,
-            @Value("${minio.url}") String endpoint,
-            @Value("${minio.public-url}") String publicUrl
+            @Qualifier("minioPresignClient") MinioClient presignClient,
+            @Value("${minio.bucket}") String bucket
     ) {
         this.minioClient = minioClient;
+        this.presignClient = presignClient;
         this.bucket = bucket;
-        this.endpoint = trimSlash(endpoint);
-        this.publicUrl = trimSlash(publicUrl);
     }
 
     @PostConstruct
@@ -106,7 +104,7 @@ public class MinioStorageService {
 
     public String presignedUrl(String objectKey) {
         try {
-            String url = minioClient.getPresignedObjectUrl(
+            return presignClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(bucket)
@@ -114,10 +112,6 @@ public class MinioStorageService {
                             .expiry(1, TimeUnit.HOURS)
                             .build()
             );
-            if (!publicUrl.equals(endpoint)) {
-                return url.replace(endpoint, publicUrl);
-            }
-            return url;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate photo URL", e);
         }
@@ -146,12 +140,5 @@ public class MinioStorageService {
             return "";
         }
         return ext;
-    }
-
-    private String trimSlash(String url) {
-        if (url.endsWith("/")) {
-            return url.substring(0, url.length() - 1);
-        }
-        return url;
     }
 }

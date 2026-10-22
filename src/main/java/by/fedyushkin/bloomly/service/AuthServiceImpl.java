@@ -9,6 +9,8 @@ import by.fedyushkin.bloomly.notification.TelegramNotificationBot;
 import by.fedyushkin.bloomly.repository.RoleRepository;
 import by.fedyushkin.bloomly.repository.UserRepository;
 import by.fedyushkin.bloomly.security.JwtService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import by.fedyushkin.bloomly.util.PhoneNumbers;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final JwtService jwtService;
+    private final RefreshTokenStoreService refreshTokenStore;
     private final UserService userService;
 
     @Override
@@ -58,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse login(String phone, String code) {
+    public IssuedSession login(String phone, String code) {
         String normalizedPhone = requirePhone(phone);
         if (code == null || code.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Укажите код из Telegram");
@@ -68,9 +71,57 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByPhone(normalizedPhone)
                 .orElseGet(() -> registerClient(normalizedPhone));
 
-        String token = jwtService.generateToken(user);
+        return issue(user);
+    }
+
+    @Override
+    public IssuedSession refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is missing");
+        }
+
+        Claims claims;
+        try {
+            claims = jwtService.parseToken(refreshToken);
+        } catch (JwtException | IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is invalid or expired");
+        }
+        if (!jwtService.isRefreshToken(claims) || claims.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is invalid or expired");
+        }
+
+        String storedUserId = refreshTokenStore.consume(claims.getId());
+        if (storedUserId == null || !storedUserId.equals(claims.getSubject())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is invalid or expired");
+        }
+
+        User user = userRepository.findById(Long.valueOf(claims.getSubject()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is invalid or expired"));
+        return issue(user);
+    }
+
+    @Override
+    public void logout(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
+        }
+        try {
+            Claims claims = jwtService.parseToken(refreshToken);
+            if (jwtService.isRefreshToken(claims) && claims.getId() != null) {
+                refreshTokenStore.delete(claims.getId());
+            }
+        } catch (JwtException | IllegalArgumentException ignored) {
+            // The cookie is cleared even when the token is already invalid.
+        }
+    }
+
+    private IssuedSession issue(User user) {
+        String accessToken = jwtService.generateAccessToken(user);
+        JwtService.RefreshToken refreshToken = jwtService.generateRefreshToken(user);
+        refreshTokenStore.save(refreshToken.jti(), user.getId());
         UserDto userDto = userService.getById(user.getId());
-        return new AuthResponse(token, "Bearer", userDto);
+        AuthResponse response = new AuthResponse(accessToken, "Bearer", jwtService.getAccessTtlSeconds(), userDto);
+        return new IssuedSession(response, refreshToken.value());
     }
 
     private User registerClient(String phone) {
