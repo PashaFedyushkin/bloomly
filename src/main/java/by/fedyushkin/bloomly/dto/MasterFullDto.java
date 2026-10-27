@@ -10,6 +10,7 @@ public class MasterFullDto {
     private String vk;
     private String instagram;
     private String telegram;
+    private String photoUrl;
     private UserDto userDto;
     private Float rating;
     private Long reviewCount;

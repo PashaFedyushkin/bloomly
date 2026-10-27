@@ -9,6 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +60,16 @@ public class SessionController extends BaseController{
         return Collections.emptyList();
     }
 
+    @GetMapping("/available")
+    public List<LocalDateTime> availableStarts(
+            @RequestParam Long masterId,
+            @RequestParam Long serviceId,
+            @Parameter(description = "День записи", example = "2026-10-27", schema = @Schema(type = "string", format = "date"))
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return sessionService.availableStarts(masterId, serviceId, date);
+    }
+
     @GetMapping("/{id}")
     public SessionDto getById(@PathVariable Long id) {
         return sessionService.getById(id);
@@ -69,6 +80,17 @@ public class SessionController extends BaseController{
     public SessionDto create(@RequestBody SessionDto sessionDto) {
         sessionDto.setMasterId(getCurrentUserId());
         return sessionService.create(sessionDto);
+    }
+
+    @PostMapping("/book")
+    @ResponseStatus(HttpStatus.CREATED)
+    public SessionDto book(@RequestBody SessionDto sessionDto) {
+        return sessionService.book(
+                getCurrentUserId(),
+                sessionDto.getMasterId(),
+                sessionDto.getServiceId(),
+                sessionDto.getDate()
+        );
     }
 
     @PutMapping("/{id}")

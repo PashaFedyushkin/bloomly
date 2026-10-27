@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -89,12 +90,42 @@ public class MasterServiceImpl implements MasterService {
     }
 
     @Override
-    public void delete(Long masterId) {
-        if (!repository.existsById(masterId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Master not found: " + masterId);
+    public MasterDto updatePhoto(Long masterId, MultipartFile photo) {
+        if (photo == null || photo.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Photo is required");
         }
+        Master master = getMasterOrThrow(masterId);
+        String oldKey = master.getPhotoKey();
+        String newKey = minioStorageService.uploadMasterPhoto(masterId, photo);
+        master.setPhotoKey(newKey);
+        MasterDto dto = toDto(repository.save(master));
+        if (oldKey != null) {
+            minioStorageService.delete(oldKey);
+        }
+        return dto;
+    }
+
+    @Override
+    public void deletePhoto(Long masterId) {
+        Master master = getMasterOrThrow(masterId);
+        String oldKey = master.getPhotoKey();
+        if (oldKey == null) {
+            return;
+        }
+        master.setPhotoKey(null);
+        repository.save(master);
+        minioStorageService.delete(oldKey);
+    }
+
+    @Override
+    public void delete(Long masterId) {
+        Master master = getMasterOrThrow(masterId);
         portfolioService.deleteByMasterId(masterId);
-        repository.deleteById(masterId);
+        String photoKey = master.getPhotoKey();
+        repository.delete(master);
+        if (photoKey != null) {
+            minioStorageService.delete(photoKey);
+        }
     }
 
     private Pageable stablePage(Pageable pageable) {
@@ -139,6 +170,7 @@ public class MasterServiceImpl implements MasterService {
             dto.setAddressId(master.getAddress().getId());
             dto.setAddress(toAddressDto(master.getAddress()));
         }
+        dto.setPhotoUrl(photoUrl(master));
         return dto;
     }
 
@@ -149,6 +181,7 @@ public class MasterServiceImpl implements MasterService {
         dto.setVk(master.getVk());
         dto.setInstagram(master.getInstagram());
         dto.setTelegram(master.getTelegram());
+        dto.setPhotoUrl(photoUrl(master));
         if (master.getUser() != null) {
             UserDto userDto = new UserDto();
             userDto.setId(master.getUser().getId());
@@ -167,6 +200,13 @@ public class MasterServiceImpl implements MasterService {
         dto.setReviewCount(master.getSessions() == null ? 0 : master.getSessions().stream().map(Session::getReview).filter(Objects::nonNull).count());
         dto.setRating(master.getRating());
         return dto;
+    }
+
+    private String photoUrl(Master master) {
+        if (master.getPhotoKey() == null) {
+            return null;
+        }
+        return minioStorageService.presignedUrl(master.getPhotoKey());
     }
 
     private AddressDto toAddressDto(Address address) {

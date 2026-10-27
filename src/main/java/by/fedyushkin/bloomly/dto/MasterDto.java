@@ -10,6 +10,7 @@ public class MasterDto {
     private String vk;
     private String instagram;
     private String telegram;
+    private String photoUrl;
     private Long userId;
     private Long addressId;
     private AddressDto address;

@@ -68,6 +68,10 @@ public class MinioStorageService {
         return uploadPhoto("users", userId, file);
     }
 
+    public String uploadMasterPhoto(Long masterId, MultipartFile file) {
+        return uploadPhoto("masters", masterId, file);
+    }
+
     private String uploadPhoto(String folder, Long ownerId, MultipartFile file) {
         validateImage(file);
         String objectKey = folder + "/" + ownerId + "/" + UUID.randomUUID() + extension(file.getOriginalFilename());

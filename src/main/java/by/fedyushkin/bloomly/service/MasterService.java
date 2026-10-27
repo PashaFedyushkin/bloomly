@@ -4,6 +4,7 @@ import by.fedyushkin.bloomly.dto.MasterDto;
 import by.fedyushkin.bloomly.dto.MasterFullDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface MasterService {
 
@@ -16,6 +17,10 @@ public interface MasterService {
     MasterDto create(MasterDto masterDto);
 
     MasterDto update(Long masterId, MasterDto masterDto);
+
+    MasterDto updatePhoto(Long masterId, MultipartFile photo);
+
+    void deletePhoto(Long masterId);
 
     void delete(Long masterId);
 }
