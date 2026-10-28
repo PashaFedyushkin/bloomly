@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,7 +19,6 @@ import java.util.List;
 @Transactional
 public class PortfolioServiceImpl implements PortfolioService {
 
-    private static final int MAX_PHOTOS = 10;
     private static final int MAX_DESCRIPTION_LENGTH = 2000;
 
     private final PortfolioRepository repository;
@@ -43,85 +41,75 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     @Override
     @Transactional(readOnly = true)
-    public PortfolioDto getByMasterId(Long masterId) {
-        return repository.findByMasterId(masterId)
+    public List<PortfolioDto> getByMasterId(Long masterId) {
+        return repository.findByMasterIdOrderByIdAsc(masterId).stream()
                 .map(this::toDto)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Портфолио не найдено для мастера: " + masterId));
+                .toList();
     }
 
     @Override
-    public PortfolioDto create(Long masterId, String description, List<MultipartFile> photos) {
+    public PortfolioDto create(Long masterId, String description, MultipartFile photo) {
         Master master = masterRepository.findById(masterId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Мастер не найден: " + masterId));
-        if (repository.existsByMasterId(masterId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Для данного мастера портфолио уже существует: " + masterId);
+        if (photo == null || photo.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Photo is required");
         }
 
-        List<MultipartFile> imageFiles = requirePhotos(photos);
-        List<String> uploadedKeys = uploadPhotos(masterId, imageFiles);
+        String uploadedKey = minioStorageService.uploadPortfolioPhoto(masterId, photo);
         try {
             Portfolio portfolio = new Portfolio();
             portfolio.setMaster(master);
             portfolio.setDescription(normalizeDescription(description));
-            portfolio.setPhotoKeys(new ArrayList<>(uploadedKeys));
+            portfolio.setPhotoKey(uploadedKey);
             return toDto(repository.save(portfolio));
         } catch (RuntimeException e) {
-            uploadedKeys.forEach(minioStorageService::delete);
+            minioStorageService.delete(uploadedKey);
             throw e;
         }
     }
 
     @Override
-    public PortfolioDto update(Long portfolioId, String description, List<MultipartFile> photos) {
-        Portfolio portfolio = getPortfolioOrThrow(portfolioId);
+    public PortfolioDto update(Long masterId, Long portfolioId, String description, MultipartFile photo) {
+        Portfolio portfolio = getOwnedPortfolio(masterId, portfolioId);
         if (description != null) {
             portfolio.setDescription(normalizeDescription(description));
         }
-
-        List<MultipartFile> imageFiles = requirePhotos(photos);
-        if (imageFiles.isEmpty()) {
-            return toDto(repository.save(portfolio));
+        String oldKey = null;
+        String uploadedKey = null;
+        if (photo != null && !photo.isEmpty()) {
+            uploadedKey = minioStorageService.uploadPortfolioPhoto(masterId, photo);
+            oldKey = portfolio.getPhotoKey();
+            portfolio.setPhotoKey(uploadedKey);
         }
-
-        List<String> oldKeys = new ArrayList<>(portfolio.getPhotoKeys());
-        List<String> uploadedKeys = uploadPhotos(portfolio.getMaster().getId(), imageFiles);
         try {
-            portfolio.setPhotoKeys(new ArrayList<>(uploadedKeys));
             PortfolioDto dto = toDto(repository.save(portfolio));
-            oldKeys.forEach(minioStorageService::delete);
+            if (oldKey != null) {
+                minioStorageService.delete(oldKey);
+            }
             return dto;
         } catch (RuntimeException e) {
-            uploadedKeys.forEach(minioStorageService::delete);
+            if (uploadedKey != null) {
+                minioStorageService.delete(uploadedKey);
+            }
             throw e;
         }
     }
 
     @Override
-    public void delete(Long portfolioId) {
-        deletePortfolio(getPortfolioOrThrow(portfolioId));
+    public void delete(Long masterId, Long portfolioId) {
+        deletePortfolio(getOwnedPortfolio(masterId, portfolioId));
     }
 
     @Override
     public void deleteByMasterId(Long masterId) {
-        repository.findByMasterId(masterId).ifPresent(this::deletePortfolio);
+        repository.findByMasterIdOrderByIdAsc(masterId).forEach(this::deletePortfolio);
     }
 
     private void deletePortfolio(Portfolio portfolio) {
-        List<String> keys = new ArrayList<>(portfolio.getPhotoKeys());
+        String photoKey = portfolio.getPhotoKey();
         repository.delete(portfolio);
-        keys.forEach(minioStorageService::delete);
-    }
-
-    private List<String> uploadPhotos(Long masterId, List<MultipartFile> photos) {
-        List<String> keys = new ArrayList<>();
-        try {
-            for (MultipartFile photo : photos) {
-                keys.add(minioStorageService.uploadPortfolioPhoto(masterId, photo));
-            }
-            return keys;
-        } catch (RuntimeException e) {
-            keys.forEach(minioStorageService::delete);
-            throw e;
+        if (photoKey != null) {
+            minioStorageService.delete(photoKey);
         }
     }
 
@@ -136,19 +124,17 @@ public class PortfolioServiceImpl implements PortfolioService {
         return trimmed;
     }
 
-    private List<MultipartFile> requirePhotos(List<MultipartFile> photos) {
-        List<MultipartFile> files = photos == null
-                ? List.of()
-                : photos.stream().filter(file -> file != null && !file.isEmpty()).toList();
-        if (files.size() > MAX_PHOTOS) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At most 10 photos are allowed");
-        }
-        return files;
-    }
-
     private Portfolio getPortfolioOrThrow(Long portfolioId) {
         return repository.findById(portfolioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found: " + portfolioId));
+    }
+
+    private Portfolio getOwnedPortfolio(Long masterId, Long portfolioId) {
+        Portfolio portfolio = getPortfolioOrThrow(portfolioId);
+        if (portfolio.getMaster() == null || !masterId.equals(portfolio.getMaster().getId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found: " + portfolioId);
+        }
+        return portfolio;
     }
 
     private PortfolioDto toDto(Portfolio portfolio) {
@@ -158,9 +144,9 @@ public class PortfolioServiceImpl implements PortfolioService {
         if (portfolio.getMaster() != null) {
             dto.setMasterId(portfolio.getMaster().getId());
         }
-        dto.setPhotoUrls(portfolio.getPhotoKeys().stream()
-                .map(minioStorageService::presignedUrl)
-                .toList());
+        if (portfolio.getPhotoKey() != null) {
+            dto.setPhotoUrl(minioStorageService.presignedUrl(portfolio.getPhotoKey()));
+        }
         return dto;
     }
 }

@@ -143,7 +143,7 @@ public class SessionServiceImpl implements SessionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Процедура не принадлежит этому мастеру");
         }
         int duration = requireDuration(service);
-        List<WorkInterval> intervals = workIntervalRepository.findByMasterIdOrderByStartTimeAsc(masterId);
+        List<WorkInterval> intervals = workIntervalRepository.findByMasterIdAndWorkDateOrderByStartTimeAsc(masterId, date);
         List<Session> busy = repository.findOccupying(
                 masterId,
                 date.atStartOfDay().minusDays(1),
@@ -154,11 +154,11 @@ public class SessionServiceImpl implements SessionService {
         LocalDateTime now = LocalDateTime.now();
         List<LocalDateTime> starts = new ArrayList<>();
         for (WorkInterval interval : intervals) {
-            if (interval.getStartTime() == null || interval.getEndTime() == null) {
+            if (interval.getWorkDate() == null || interval.getStartTime() == null || interval.getEndTime() == null) {
                 continue;
             }
-            LocalDateTime windowStart = date.atTime(interval.getStartTime());
-            LocalDateTime windowEnd = date.atTime(interval.getEndTime());
+            LocalDateTime windowStart = interval.getWorkDate().atTime(interval.getStartTime());
+            LocalDateTime windowEnd = interval.getWorkDate().atTime(interval.getEndTime());
             LocalDateTime cursor = alignUp(windowStart);
             while (!cursor.plusMinutes(duration).isAfter(windowEnd)) {
                 if (!cursor.isBefore(now) && !overlaps(cursor, duration, busy)) {

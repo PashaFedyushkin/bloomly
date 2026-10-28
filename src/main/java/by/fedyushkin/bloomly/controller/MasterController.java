@@ -50,7 +50,10 @@ public class MasterController extends BaseController {
     }
 
     @PutMapping("/schedule")
-    public List<WorkIntervalDto> updateSchedule(@RequestBody List<WorkIntervalDto> intervals) {
+    public List<WorkIntervalDto> updateSchedule(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Интервалы работы по датам", required = true)
+            @RequestBody List<WorkIntervalDto> intervals
+    ) {
         return workScheduleService.replace(getCurrentUserId(), intervals);
     }
 

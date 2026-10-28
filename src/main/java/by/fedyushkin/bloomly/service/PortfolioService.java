@@ -11,13 +11,13 @@ public interface PortfolioService {
 
     PortfolioDto getById(Long portfolioId);
 
-    PortfolioDto getByMasterId(Long masterId);
+    List<PortfolioDto> getByMasterId(Long masterId);
 
-    PortfolioDto create(Long masterId, String description, List<MultipartFile> photos);
+    PortfolioDto create(Long masterId, String description, MultipartFile photo);
 
-    PortfolioDto update(Long portfolioId, String description, List<MultipartFile> photos);
+    PortfolioDto update(Long masterId, Long portfolioId, String description, MultipartFile photo);
 
-    void delete(Long portfolioId);
+    void delete(Long masterId, Long portfolioId);
 
     void deleteByMasterId(Long masterId);
 }

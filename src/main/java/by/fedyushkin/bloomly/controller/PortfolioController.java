@@ -20,9 +20,14 @@ public class PortfolioController extends BaseController{
     @GetMapping
     public List<PortfolioDto> getAll(@RequestParam(required = false) Long masterId) {
         if (masterId != null) {
-            return List.of(portfolioService.getByMasterId(masterId));
+            return portfolioService.getByMasterId(masterId);
         }
         return portfolioService.getAll();
+    }
+
+    @GetMapping("/my")
+    public List<PortfolioDto> getCurrent() {
+        return portfolioService.getByMasterId(getCurrentUserId());
     }
 
     @GetMapping("/{id}")
@@ -30,31 +35,27 @@ public class PortfolioController extends BaseController{
         return portfolioService.getById(id);
     }
 
-    @GetMapping("/my")
-    public PortfolioDto getCurrent() {
-        return portfolioService.getByMasterId(getCurrentUserId());
-    }
-
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public PortfolioDto create(
             @RequestParam(required = false) String description,
-            @RequestParam(value = "photos", required = false) List<MultipartFile> photos
+            @RequestParam("photo") MultipartFile photo
     ) {
-        return portfolioService.create(getCurrentUserId(), description, photos);
+        return portfolioService.create(getCurrentUserId(), description, photo);
     }
 
-    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public PortfolioDto update(
+            @PathVariable Long id,
             @RequestParam(required = false) String description,
-            @RequestParam(value = "photos", required = false) List<MultipartFile> photos
+            @RequestParam(value = "photo", required = false) MultipartFile photo
     ) {
-        return portfolioService.update(getCurrentUserId(), description, photos);
+        return portfolioService.update(getCurrentUserId(), id, description, photo);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete() {
-        portfolioService.delete(getCurrentUserId());
+    public void delete(@PathVariable Long id) {
+        portfolioService.delete(getCurrentUserId(), id);
     }
 }

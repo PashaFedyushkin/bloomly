@@ -27,7 +27,7 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
     @Transactional(readOnly = true)
     public List<WorkIntervalDto> get(Long masterId) {
         getMasterOrThrow(masterId);
-        return repository.findByMasterIdOrderByStartTimeAsc(masterId).stream()
+        return repository.findByMasterIdOrderByWorkDateAscStartTimeAsc(masterId).stream()
                 .map(this::toDto)
                 .toList();
     }
@@ -40,6 +40,7 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         for (WorkIntervalDto dto : normalized) {
             WorkInterval interval = new WorkInterval();
             interval.setMaster(master);
+            interval.setWorkDate(dto.getDate());
             interval.setStartTime(dto.getStart());
             interval.setEndTime(dto.getEnd());
             repository.save(interval);
@@ -53,10 +54,11 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         }
         List<WorkIntervalDto> sorted = new ArrayList<>();
         for (WorkIntervalDto interval : intervals) {
-            if (interval == null || interval.getStart() == null || interval.getEnd() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Укажите время начала и конца");
+            if (interval == null || interval.getDate() == null || interval.getStart() == null || interval.getEnd() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Укажите дату, время начала и конца");
             }
             WorkIntervalDto copy = new WorkIntervalDto();
+            copy.setDate(interval.getDate());
             copy.setStart(interval.getStart().withSecond(0).withNano(0));
             copy.setEnd(interval.getEnd().withSecond(0).withNano(0));
             if (!copy.getStart().isBefore(copy.getEnd())) {
@@ -64,9 +66,11 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
             }
             sorted.add(copy);
         }
-        sorted.sort(Comparator.comparing(WorkIntervalDto::getStart));
+        sorted.sort(Comparator.comparing(WorkIntervalDto::getDate).thenComparing(WorkIntervalDto::getStart));
         for (int i = 1; i < sorted.size(); i++) {
-            if (sorted.get(i).getStart().isBefore(sorted.get(i - 1).getEnd())) {
+            WorkIntervalDto current = sorted.get(i);
+            WorkIntervalDto previous = sorted.get(i - 1);
+            if (current.getDate().equals(previous.getDate()) && current.getStart().isBefore(previous.getEnd())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Интервалы работы пересекаются");
             }
         }
@@ -75,6 +79,7 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
 
     private WorkIntervalDto toDto(WorkInterval interval) {
         WorkIntervalDto dto = new WorkIntervalDto();
+        dto.setDate(interval.getWorkDate());
         dto.setStart(interval.getStartTime());
         dto.setEnd(interval.getEndTime());
         return dto;

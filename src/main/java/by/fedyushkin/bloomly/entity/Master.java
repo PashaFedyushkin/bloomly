@@ -29,8 +29,8 @@ public class Master {
     private List<Session> sessions;
     @OneToMany(mappedBy = "master")
     private List<Service> services;
-    @OneToOne(mappedBy = "master")
-    private Portfolio portfolio;
+    @OneToMany(mappedBy = "master")
+    private List<Portfolio> portfolios;
     @ManyToOne
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private Address address;

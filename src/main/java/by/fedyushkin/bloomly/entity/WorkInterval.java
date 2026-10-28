@@ -9,6 +9,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
@@ -24,6 +25,7 @@ public class WorkInterval {
     @JoinColumn(name = "master_id", referencedColumnName = "id")
     private Master master;
 
+    private LocalDate workDate;
     private LocalTime startTime;
     private LocalTime endTime;
 }

@@ -1,10 +1,14 @@
 package by.fedyushkin.bloomly.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import lombok.Data;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Data
@@ -18,13 +22,10 @@ public class Portfolio {
     @Column(length = 2000)
     private String description;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "master_id", nullable = false, unique = true)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "master_id", nullable = false)
     private Master master;
 
-    @ElementCollection
-    @CollectionTable(name = "portfolio_photo", joinColumns = @JoinColumn(name = "portfolio_id"))
-    @OrderColumn(name = "photo_order")
-    @Column(name = "object_key", length = 500, nullable = false)
-    private List<String> photoKeys = new ArrayList<>();
+    @Column(length = 500)
+    private String photoKey;
 }
