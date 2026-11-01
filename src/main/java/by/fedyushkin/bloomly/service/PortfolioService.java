@@ -13,9 +13,11 @@ public interface PortfolioService {
 
     List<PortfolioDto> getByMasterId(Long masterId);
 
-    PortfolioDto create(Long masterId, String description, MultipartFile photo);
+    List<PortfolioDto> getFavoritesByMasterId(Long masterId);
 
-    PortfolioDto update(Long masterId, Long portfolioId, String description, MultipartFile photo);
+    PortfolioDto create(Long masterId, String description, MultipartFile photo, boolean favorite);
+
+    PortfolioDto update(Long masterId, Long portfolioId, String description, MultipartFile photo, Boolean favorite);
 
     void delete(Long masterId, Long portfolioId);
 

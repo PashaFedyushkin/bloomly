@@ -35,5 +35,5 @@ public class Master {
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private Address address;
     @OneToMany(mappedBy = "master")
-    private List<WorkInterval> workIntervals;
+    private List<WorkDay> workDays;
 }

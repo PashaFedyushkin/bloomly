@@ -2,9 +2,7 @@ package by.fedyushkin.bloomly.controller;
 
 import by.fedyushkin.bloomly.dto.MasterDto;
 import by.fedyushkin.bloomly.dto.MasterFullDto;
-import by.fedyushkin.bloomly.dto.WorkIntervalDto;
 import by.fedyushkin.bloomly.service.MasterService;
-import by.fedyushkin.bloomly.service.WorkScheduleService;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -14,15 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/masters")
 @AllArgsConstructor
 public class MasterController extends BaseController {
 
     private final MasterService masterService;
-    private final WorkScheduleService workScheduleService;
 
     @GetMapping
     public Page<MasterDto> getAll(@ParameterObject Pageable pageable) {
@@ -42,19 +37,6 @@ public class MasterController extends BaseController {
     @GetMapping("/current")
     public MasterFullDto getById() {
         return masterService.getById(getCurrentUserId());
-    }
-
-    @GetMapping("/schedule")
-    public List<WorkIntervalDto> getSchedule() {
-        return workScheduleService.get(getCurrentUserId());
-    }
-
-    @PutMapping("/schedule")
-    public List<WorkIntervalDto> updateSchedule(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Интервалы работы по датам", required = true)
-            @RequestBody List<WorkIntervalDto> intervals
-    ) {
-        return workScheduleService.replace(getCurrentUserId(), intervals);
     }
 
     @PostMapping

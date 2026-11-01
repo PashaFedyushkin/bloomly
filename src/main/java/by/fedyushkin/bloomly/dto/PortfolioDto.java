@@ -9,4 +9,5 @@ public class PortfolioDto {
     private Long masterId;
     private String description;
     private String photoUrl;
+    private boolean favorite;
 }

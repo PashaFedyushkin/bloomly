@@ -48,7 +48,15 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     @Override
-    public PortfolioDto create(Long masterId, String description, MultipartFile photo) {
+    @Transactional(readOnly = true)
+    public List<PortfolioDto> getFavoritesByMasterId(Long masterId) {
+        return repository.findByMasterIdAndFavoriteTrueOrderByIdAsc(masterId).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Override
+    public PortfolioDto create(Long masterId, String description, MultipartFile photo, boolean favorite) {
         Master master = masterRepository.findById(masterId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Мастер не найден: " + masterId));
         if (photo == null || photo.isEmpty()) {
@@ -61,6 +69,7 @@ public class PortfolioServiceImpl implements PortfolioService {
             portfolio.setMaster(master);
             portfolio.setDescription(normalizeDescription(description));
             portfolio.setPhotoKey(uploadedKey);
+            portfolio.setFavorite(favorite);
             return toDto(repository.save(portfolio));
         } catch (RuntimeException e) {
             minioStorageService.delete(uploadedKey);
@@ -69,10 +78,13 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     @Override
-    public PortfolioDto update(Long masterId, Long portfolioId, String description, MultipartFile photo) {
+    public PortfolioDto update(Long masterId, Long portfolioId, String description, MultipartFile photo, Boolean favorite) {
         Portfolio portfolio = getOwnedPortfolio(masterId, portfolioId);
         if (description != null) {
             portfolio.setDescription(normalizeDescription(description));
+        }
+        if (favorite != null) {
+            portfolio.setFavorite(favorite);
         }
         String oldKey = null;
         String uploadedKey = null;
@@ -141,6 +153,7 @@ public class PortfolioServiceImpl implements PortfolioService {
         PortfolioDto dto = new PortfolioDto();
         dto.setId(portfolio.getId());
         dto.setDescription(portfolio.getDescription());
+        dto.setFavorite(portfolio.isFavorite());
         if (portfolio.getMaster() != null) {
             dto.setMasterId(portfolio.getMaster().getId());
         }

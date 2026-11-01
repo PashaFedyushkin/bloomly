@@ -8,4 +8,6 @@ import java.util.List;
 public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
 
     List<Portfolio> findByMasterIdOrderByIdAsc(Long masterId);
+
+    List<Portfolio> findByMasterIdAndFavoriteTrueOrderByIdAsc(Long masterId);
 }

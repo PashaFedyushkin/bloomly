@@ -9,7 +9,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import lombok.Data;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
@@ -21,11 +20,10 @@ public class WorkInterval {
     @SequenceGenerator(name = "work_interval_id_generator", sequenceName = "work_interval_id_seq", allocationSize = 1)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "master_id", referencedColumnName = "id")
-    private Master master;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "work_day_id", nullable = false)
+    private WorkDay workDay;
 
-    private LocalDate workDate;
     private LocalTime startTime;
     private LocalTime endTime;
 }

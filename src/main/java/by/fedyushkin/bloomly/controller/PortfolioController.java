@@ -30,6 +30,11 @@ public class PortfolioController extends BaseController{
         return portfolioService.getByMasterId(getCurrentUserId());
     }
 
+    @GetMapping("/favorites/{masterId}")
+    public List<PortfolioDto> getFavorites(@PathVariable Long masterId) {
+        return portfolioService.getFavoritesByMasterId(masterId);
+    }
+
     @GetMapping("/{id}")
     public PortfolioDto getById(@PathVariable Long id) {
         return portfolioService.getById(id);
@@ -39,18 +44,20 @@ public class PortfolioController extends BaseController{
     @ResponseStatus(HttpStatus.CREATED)
     public PortfolioDto create(
             @RequestParam(required = false) String description,
-            @RequestParam("photo") MultipartFile photo
+            @RequestParam("photo") MultipartFile photo,
+            @RequestParam(required = false, defaultValue = "false") boolean favorite
     ) {
-        return portfolioService.create(getCurrentUserId(), description, photo);
+        return portfolioService.create(getCurrentUserId(), description, photo, favorite);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public PortfolioDto update(
             @PathVariable Long id,
             @RequestParam(required = false) String description,
-            @RequestParam(value = "photo", required = false) MultipartFile photo
+            @RequestParam(value = "photo", required = false) MultipartFile photo,
+            @RequestParam(required = false) Boolean favorite
     ) {
-        return portfolioService.update(getCurrentUserId(), id, description, photo);
+        return portfolioService.update(getCurrentUserId(), id, description, photo, favorite);
     }
 
     @DeleteMapping("/{id}")

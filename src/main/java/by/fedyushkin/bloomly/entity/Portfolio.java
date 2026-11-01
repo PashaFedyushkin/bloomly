@@ -28,4 +28,7 @@ public class Portfolio {
 
     @Column(length = 500)
     private String photoKey;
+
+    @Column(nullable = false)
+    private boolean favorite;
 }
