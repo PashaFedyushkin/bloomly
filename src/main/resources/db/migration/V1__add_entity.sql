@@ -56,6 +56,7 @@ create table address (
 
 create table master (
     id numeric not null primary key,
+    description varchar(4000),
     unp varchar(100),
     photo_key varchar(500),
     vk varchar(200),
@@ -149,8 +150,15 @@ create sequence work_interval_id_seq;
 
 create table work_interval (
     id numeric not null primary key,
-    work_day_id numeric not null,
     start_time time not null,
     end_time time not null,
-    constraint fk_work_interval_work_day foreign key (work_day_id) references work_day (id) on delete cascade
+    constraint uq_work_interval_time unique (start_time, end_time)
+);
+
+create table work_day_interval (
+    work_day_id numeric not null,
+    work_interval_id numeric not null,
+    constraint pk_work_day_interval primary key (work_day_id, work_interval_id),
+    constraint fk_work_day_interval_day foreign key (work_day_id) references work_day (id) on delete cascade,
+    constraint fk_work_day_interval_interval foreign key (work_interval_id) references work_interval (id) on delete cascade
 );

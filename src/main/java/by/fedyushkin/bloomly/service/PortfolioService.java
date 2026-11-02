@@ -19,6 +19,8 @@ public interface PortfolioService {
 
     PortfolioDto update(Long masterId, Long portfolioId, String description, MultipartFile photo, Boolean favorite);
 
+    PortfolioDto markFavorite(Long masterId, Long portfolioId);
+
     void delete(Long masterId, Long portfolioId);
 
     void deleteByMasterId(Long masterId);

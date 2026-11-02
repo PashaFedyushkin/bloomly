@@ -154,14 +154,11 @@ public class SessionServiceImpl implements SessionService {
         LocalDateTime now = LocalDateTime.now();
         List<LocalDateTime> starts = new ArrayList<>();
         for (WorkInterval interval : intervals) {
-            if (interval.getWorkDay() == null
-                    || interval.getWorkDay().getWorkDate() == null
-                    || interval.getStartTime() == null
-                    || interval.getEndTime() == null) {
+            if (interval.getStartTime() == null || interval.getEndTime() == null) {
                 continue;
             }
-            LocalDateTime windowStart = interval.getWorkDay().getWorkDate().atTime(interval.getStartTime());
-            LocalDateTime windowEnd = interval.getWorkDay().getWorkDate().atTime(interval.getEndTime());
+            LocalDateTime windowStart = date.atTime(interval.getStartTime());
+            LocalDateTime windowEnd = date.atTime(interval.getEndTime());
             LocalDateTime cursor = alignUp(windowStart);
             while (!cursor.plusMinutes(duration).isAfter(windowEnd)) {
                 if (!cursor.isBefore(now) && !overlaps(cursor, duration, busy)) {

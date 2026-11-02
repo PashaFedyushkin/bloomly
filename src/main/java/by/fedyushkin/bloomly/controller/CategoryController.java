@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/categories")
 @AllArgsConstructor
@@ -21,6 +23,11 @@ public class CategoryController {
     @GetMapping
     public Page<CategoryDto> getAll(@ParameterObject Pageable pageable) {
         return categoryService.getAll(pageable);
+    }
+
+    @GetMapping("/master/{masterId}")
+    public List<CategoryDto> getByMasterId(@PathVariable Long masterId) {
+        return categoryService.getByMasterId(masterId);
     }
 
     @GetMapping("/{id}")

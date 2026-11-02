@@ -34,14 +34,14 @@ public class WorkIntervalController extends BaseController {
         return workIntervalService.create(getCurrentUserId(), workIntervalDto);
     }
 
-    @PutMapping("/{id}")
-    public WorkIntervalDto update(@PathVariable Long id, @RequestBody WorkIntervalDto workIntervalDto) {
-        return workIntervalService.update(getCurrentUserId(), id, workIntervalDto);
+    @PutMapping
+    public WorkIntervalDto update(@RequestBody WorkIntervalDto workIntervalDto) {
+        return workIntervalService.update(getCurrentUserId(), workIntervalDto);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        workIntervalService.delete(getCurrentUserId(), id);
+    public void delete(@PathVariable Long id, @RequestParam(required = false) Long workDayId) {
+        workIntervalService.delete(getCurrentUserId(), id, workDayId);
     }
 }

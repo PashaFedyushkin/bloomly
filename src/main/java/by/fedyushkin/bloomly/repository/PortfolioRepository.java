@@ -9,5 +9,9 @@ public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
 
     List<Portfolio> findByMasterIdOrderByIdAsc(Long masterId);
 
+    long countByMasterId(Long masterId);
+
+    long countByMasterIdAndFavoriteTrue(Long masterId);
+
     List<Portfolio> findByMasterIdAndFavoriteTrueOrderByIdAsc(Long masterId);
 }

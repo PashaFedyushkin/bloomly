@@ -16,6 +16,8 @@ public class Master {
     private User user;
     @Column(length = 500)
     private String photoKey;
+    @Column(length = 4000)
+    private String description;
     @Column(length = 100)
     private String unp;
     @Column(length = 200)

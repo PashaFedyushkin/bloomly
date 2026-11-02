@@ -14,7 +14,7 @@ public interface WorkIntervalService {
 
     WorkIntervalDto create(Long masterId, WorkIntervalDto workIntervalDto);
 
-    WorkIntervalDto update(Long masterId, Long workIntervalId, WorkIntervalDto workIntervalDto);
+    WorkIntervalDto update(Long masterId, WorkIntervalDto workIntervalDto);
 
-    void delete(Long masterId, Long workIntervalId);
+    void delete(Long masterId, Long workIntervalId, Long workDayId);
 }

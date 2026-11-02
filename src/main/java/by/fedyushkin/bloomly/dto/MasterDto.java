@@ -6,6 +6,7 @@ import lombok.Data;
 public class MasterDto {
 
     private Long id;
+    private String description;
     private String unp;
     private String vk;
     private String instagram;

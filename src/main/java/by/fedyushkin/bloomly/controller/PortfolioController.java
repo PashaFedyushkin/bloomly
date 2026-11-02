@@ -60,6 +60,11 @@ public class PortfolioController extends BaseController{
         return portfolioService.update(getCurrentUserId(), id, description, photo, favorite);
     }
 
+    @PutMapping("/{id}/favorite")
+    public PortfolioDto markFavorite(@PathVariable Long id) {
+        return portfolioService.markFavorite(getCurrentUserId(), id);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

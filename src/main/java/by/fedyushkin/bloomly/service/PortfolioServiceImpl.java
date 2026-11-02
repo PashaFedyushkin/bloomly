@@ -20,6 +20,8 @@ import java.util.List;
 public class PortfolioServiceImpl implements PortfolioService {
 
     private static final int MAX_DESCRIPTION_LENGTH = 2000;
+    private static final int MAX_PORTFOLIOS_PER_MASTER = 25;
+    private static final int MAX_FAVORITES_PER_MASTER = 3;
 
     private final PortfolioRepository repository;
     private final MasterRepository masterRepository;
@@ -57,13 +59,18 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     @Override
     public PortfolioDto create(Long masterId, String description, MultipartFile photo, boolean favorite) {
-        Master master = masterRepository.findById(masterId)
+        Master master = masterRepository.findByIdForUpdate(masterId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Мастер не найден: " + masterId));
-        if (photo == null || photo.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Photo is required");
+        if (repository.countByMasterId(masterId) >= MAX_PORTFOLIOS_PER_MASTER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "В портфолио может быть не больше 25 записей");
         }
-
-        String uploadedKey = minioStorageService.uploadPortfolioPhoto(masterId, photo);
+        if (favorite) {
+            assertFavoriteLimit(masterId);
+        }
+        String uploadedKey = null;
+        if (photo != null && !photo.isEmpty()) {
+            uploadedKey = minioStorageService.uploadPortfolioPhoto(masterId, photo);
+        }
         try {
             Portfolio portfolio = new Portfolio();
             portfolio.setMaster(master);
@@ -72,7 +79,9 @@ public class PortfolioServiceImpl implements PortfolioService {
             portfolio.setFavorite(favorite);
             return toDto(repository.save(portfolio));
         } catch (RuntimeException e) {
-            minioStorageService.delete(uploadedKey);
+            if (uploadedKey != null) {
+                minioStorageService.delete(uploadedKey);
+            }
             throw e;
         }
     }
@@ -82,6 +91,11 @@ public class PortfolioServiceImpl implements PortfolioService {
         Portfolio portfolio = getOwnedPortfolio(masterId, portfolioId);
         if (description != null) {
             portfolio.setDescription(normalizeDescription(description));
+        }
+        if (Boolean.TRUE.equals(favorite) && !portfolio.isFavorite()) {
+            masterRepository.findByIdForUpdate(masterId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Мастер не найден: " + masterId));
+            assertFavoriteLimit(masterId);
         }
         if (favorite != null) {
             portfolio.setFavorite(favorite);
@@ -108,6 +122,18 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     @Override
+    public PortfolioDto markFavorite(Long masterId, Long portfolioId) {
+        masterRepository.findByIdForUpdate(masterId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Мастер не найден: " + masterId));
+        Portfolio portfolio = getOwnedPortfolio(masterId, portfolioId);
+        if (!portfolio.isFavorite()) {
+            assertFavoriteLimit(masterId);
+            portfolio.setFavorite(true);
+        }
+        return toDto(repository.save(portfolio));
+    }
+
+    @Override
     public void delete(Long masterId, Long portfolioId) {
         deletePortfolio(getOwnedPortfolio(masterId, portfolioId));
     }
@@ -122,6 +148,12 @@ public class PortfolioServiceImpl implements PortfolioService {
         repository.delete(portfolio);
         if (photoKey != null) {
             minioStorageService.delete(photoKey);
+        }
+    }
+
+    private void assertFavoriteLimit(Long masterId) {
+        if (repository.countByMasterIdAndFavoriteTrue(masterId) >= MAX_FAVORITES_PER_MASTER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "В избранном может быть не больше 3 записей");
         }
     }
 

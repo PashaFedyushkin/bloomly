@@ -7,12 +7,14 @@ import by.fedyushkin.bloomly.entity.WorkDay;
 import by.fedyushkin.bloomly.entity.WorkInterval;
 import by.fedyushkin.bloomly.repository.MasterRepository;
 import by.fedyushkin.bloomly.repository.WorkDayRepository;
+import by.fedyushkin.bloomly.repository.WorkIntervalRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.List;
 public class WorkDayServiceImpl implements WorkDayService {
 
     private final WorkDayRepository repository;
+    private final WorkIntervalRepository workIntervalRepository;
     private final MasterRepository masterRepository;
 
     @Override
@@ -92,12 +95,22 @@ public class WorkDayServiceImpl implements WorkDayService {
         }
         workDay.getWorkIntervals().clear();
         for (WorkIntervalDto dto : normalized) {
-            WorkInterval interval = new WorkInterval();
-            interval.setWorkDay(workDay);
-            interval.setStartTime(dto.getStart());
-            interval.setEndTime(dto.getEnd());
-            workDay.getWorkIntervals().add(interval);
+            WorkInterval interval = findOrCreate(dto.getStart(), dto.getEnd());
+            boolean alreadyLinked = workDay.getWorkIntervals().stream()
+                    .anyMatch(item -> interval.getId().equals(item.getId()));
+            if (!alreadyLinked) {
+                workDay.getWorkIntervals().add(interval);
+            }
         }
+    }
+
+    private WorkInterval findOrCreate(LocalTime start, LocalTime end) {
+        return workIntervalRepository.findByStartTimeAndEndTime(start, end).orElseGet(() -> {
+            WorkInterval interval = new WorkInterval();
+            interval.setStartTime(start);
+            interval.setEndTime(end);
+            return workIntervalRepository.save(interval);
+        });
     }
 
     private List<WorkIntervalDto> normalize(List<WorkIntervalDto> intervals) {
@@ -152,18 +165,16 @@ public class WorkDayServiceImpl implements WorkDayService {
             dto.setMasterId(workDay.getMaster().getId());
         }
         List<WorkInterval> intervals = workDay.getWorkIntervals() == null ? List.of() : workDay.getWorkIntervals();
-        dto.setIntervals(intervals.stream().map(this::toIntervalDto).toList());
+        dto.setIntervals(intervals.stream().map(interval -> toIntervalDto(interval, workDay.getId())).toList());
         return dto;
     }
 
-    private WorkIntervalDto toIntervalDto(WorkInterval interval) {
+    private WorkIntervalDto toIntervalDto(WorkInterval interval, Long workDayId) {
         WorkIntervalDto dto = new WorkIntervalDto();
         dto.setId(interval.getId());
+        dto.setWorkDayId(workDayId);
         dto.setStart(interval.getStartTime());
         dto.setEnd(interval.getEndTime());
-        if (interval.getWorkDay() != null) {
-            dto.setWorkDayId(interval.getWorkDay().getId());
-        }
         return dto;
     }
 }

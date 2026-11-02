@@ -36,6 +36,7 @@ public class MasterServiceImpl implements MasterService {
     private final PortfolioService portfolioService;
     private final RoleRepository roleRepository;
     private final MinioStorageService minioStorageService;
+    private final CategoryService categoryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -70,6 +71,7 @@ public class MasterServiceImpl implements MasterService {
         }
         Master master = new Master();
         master.setUser(user);
+        master.setDescription(normalizeDescription(masterDto.getDescription()));
         master.setUnp(masterDto.getUnp());
         master.setVk(masterDto.getVk());
         master.setInstagram(masterDto.getInstagram());
@@ -81,6 +83,7 @@ public class MasterServiceImpl implements MasterService {
     @Override
     public MasterDto update(Long masterId, MasterDto masterDto) {
         Master master = getMasterOrThrow(masterId);
+        master.setDescription(normalizeDescription(masterDto.getDescription()));
         master.setUnp(masterDto.getUnp());
         master.setVk(masterDto.getVk());
         master.setInstagram(masterDto.getInstagram());
@@ -143,6 +146,17 @@ public class MasterServiceImpl implements MasterService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + userId));
     }
 
+    private String normalizeDescription(String description) {
+        if (description == null || description.isBlank()) {
+            return null;
+        }
+        String trimmed = description.trim();
+        if (trimmed.length() > 4000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Краткое описание должно быть не длиннее 4000 символов");
+        }
+        return trimmed;
+    }
+
     private Address resolveAddress(Long addressId) {
         if (addressId == null) {
             return null;
@@ -159,6 +173,7 @@ public class MasterServiceImpl implements MasterService {
     private MasterDto toDto(Master master) {
         MasterDto dto = new MasterDto();
         dto.setId(master.getId());
+        dto.setDescription(master.getDescription());
         dto.setUnp(master.getUnp());
         dto.setVk(master.getVk());
         dto.setInstagram(master.getInstagram());
@@ -177,6 +192,7 @@ public class MasterServiceImpl implements MasterService {
     private MasterFullDto toFullDto(Master master) {
         MasterFullDto dto = new MasterFullDto();
         dto.setId(master.getId());
+        dto.setDescription(master.getDescription());
         dto.setUnp(master.getUnp());
         dto.setVk(master.getVk());
         dto.setInstagram(master.getInstagram());
@@ -199,6 +215,7 @@ public class MasterServiceImpl implements MasterService {
         }
         dto.setReviewCount(master.getSessions() == null ? 0 : master.getSessions().stream().map(Session::getReview).filter(Objects::nonNull).count());
         dto.setRating(master.getRating());
+        dto.setCategories(categoryService.getListByMasterId(master.getId()));
         return dto;
     }
 
