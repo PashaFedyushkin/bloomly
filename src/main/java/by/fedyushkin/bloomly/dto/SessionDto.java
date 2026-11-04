@@ -15,4 +15,6 @@ public class SessionDto {
     private Long masterId;
     private Long serviceId;
     private Long userId;
+    private String userContact;
+    private int durationMinutes;
 }

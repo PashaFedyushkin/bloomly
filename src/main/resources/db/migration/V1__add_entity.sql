@@ -95,6 +95,7 @@ create table session (
     id numeric not null primary key,
     date timestamp(6),
     final_price numeric,
+    user_contact varchar(250),
     status varchar(50),
     master_id numeric,
     service_id numeric,

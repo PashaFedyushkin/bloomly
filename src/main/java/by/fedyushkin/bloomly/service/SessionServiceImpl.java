@@ -213,6 +213,7 @@ public class SessionServiceImpl implements SessionService {
         }
         session.setMaster(resolveMaster(sessionDto.getMasterId()));
         session.setService(resolveService(sessionDto.getServiceId()));
+        session.setUserContact(sessionDto.getUserContact());
     }
 
     private Master resolveMaster(Long masterId) {
@@ -280,11 +281,13 @@ public class SessionServiceImpl implements SessionService {
         dto.setDate(session.getDate());
         dto.setFinalPrice(session.getFinalPrice());
         dto.setStatus(session.getStatus());
+        dto.setUserContact(session.getUserContact());
         if (session.getMaster() != null) {
             dto.setMasterId(session.getMaster().getId());
         }
         if (session.getService() != null) {
             dto.setServiceId(session.getService().getId());
+            dto.setDurationMinutes(session.getService().getDurationMinutes());
         }
         if (session.getUser() != null) {
             dto.setUserId(session.getUser().getId());

@@ -17,6 +17,7 @@ public class Session {
     private Float finalPrice;
     @Enumerated(EnumType.STRING)
     private CSessionStatus status;
+    private String userContact;
     @ManyToOne
     @JoinColumn(name = "master_id", referencedColumnName = "id")
     private Master master;
